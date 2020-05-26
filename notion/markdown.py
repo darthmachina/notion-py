@@ -1,5 +1,6 @@
 import commonmark
 import re
+import traceback
 
 from commonmark.dump import prepare
 
@@ -109,7 +110,6 @@ def _get_format(notion_segment, as_set=False):
 
 
 def markdown_to_notion(markdown):
-
     if not isinstance(markdown, str):
         markdown = str(markdown)
 
@@ -183,8 +183,8 @@ def markdown_to_notion(markdown):
     return consolidated
 
 
-def notion_to_markdown(notion):
-
+def notion_to_markdown(notion, client=None):
+    # print(f"notion_to_markdown, notion: {notion}, client: {client}")
     markdown_chunks = []
 
     use_underscores = True
@@ -204,6 +204,7 @@ def notion_to_markdown(notion):
 
         leading_whitespace = match.groupdict()["leading"]
         stripped = match.groupdict()["stripped"]
+        # print(f"stripped: {stripped}")
         trailing_whitespace = match.groupdict()["trailing"]
 
         markdown += leading_whitespace
@@ -216,11 +217,18 @@ def notion_to_markdown(notion):
         )
 
         for f in sorted_format:
+            # print(f"format: {f}")
             if f[0] in _NOTION_TO_MARKDOWN_MAPPER:
                 if stripped:
                     markdown += _NOTION_TO_MARKDOWN_MAPPER[f[0]]
             if f[0] == "a":
                 markdown += "["
+            if f[0] == "p":
+                markdown += "["
+                if client is None:
+                    stripped = f"page: {f[1]}"
+                else:
+                    stripped = client.get_block(f[1]).title_plaintext
 
         markdown += stripped
 
@@ -230,6 +238,8 @@ def notion_to_markdown(notion):
                     markdown += _NOTION_TO_MARKDOWN_MAPPER[f[0]]
             if f[0] == "a":
                 markdown += "]({})".format(f[1])
+            if f[0] == "p":
+                markdown += f"]({f[1]})"
 
         markdown += trailing_whitespace
 
@@ -282,7 +292,7 @@ def notion_to_markdown(notion):
 
 
 def notion_to_plaintext(notion, client=None):
-
+    # print(f"notion_to_plaintext, notion: {notion}, client: {client}")
     plaintext = ""
 
     for item in notion or []:

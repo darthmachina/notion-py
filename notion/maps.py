@@ -35,8 +35,10 @@ def field_map(path, python_to_api=lambda x: x, api_to_python=lambda x: x):
 
     def fget(self):
         kwargs = {}
+        # print(f"api_to_python parameters: {signature(api_to_python).parameters}, {'client' in signature(api_to_python).parameters}")
         if "client" in signature(api_to_python).parameters:
             kwargs["client"] = self._client
+        # print(f"kwargs: {kwargs}")
         return api_to_python(self.get(path), **kwargs)
 
     def fset(self, value):
@@ -71,14 +73,15 @@ def property_map(
             kwargs["client"] = client
         x = python_to_api(x, **kwargs)
         if markdown:
-            x = markdown_to_notion(x)
+            x = markdown_to_notion(x, client)
         return x
 
     def api2py(x, client=None):
         x = x or [[""]]
         if markdown:
-            x = notion_to_markdown(x)
+            x = notion_to_markdown(x, client)
         kwargs = {}
+        # print(f"api2py: api_to_python parameters: {signature(api_to_python).parameters}, {'client' in signature(api_to_python).parameters}")
         if "client" in signature(api_to_python).parameters:
             kwargs["client"] = client
         return api_to_python(x, **kwargs)

@@ -455,7 +455,6 @@ class ColumnBlock(Block):
 
 
 class BasicBlock(Block):
-
     title = property_map("title")
     title_plaintext = property_map(
         "title",
