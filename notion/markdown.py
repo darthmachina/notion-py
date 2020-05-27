@@ -91,9 +91,28 @@ def _extract_text_and_format_from_ast(item):
         return item.get("literal", ""), ("c",)
 
     if item["type"] == "link":
-        return item.get("literal", ""), ("a", item["destination"])
+        destination = item["destination"]
+        if "://" in destination:
+            return item.get("literal", ""), ("a", destination)
+        else:
+            return item.get("literal", ""), ("p", _insert_dashes(destination))
 
     return item.get("literal", ""), ()
+
+
+def _insert_dashes(link):
+    print(f"_insert_dashes on: {link}")
+    if '-' in link:
+        return link
+    queue = [8, 12, 16, 20]
+    new_link = ""
+    for pos, element in enumerate(link):
+        if len(queue) > 0 and pos == queue[0]:
+            new_link += "-"
+            queue.pop(0)
+        new_link += element
+    print(f"returning: {new_link}")
+    return new_link
 
 
 def _get_format(notion_segment, as_set=False):
@@ -109,7 +128,7 @@ def _get_format(notion_segment, as_set=False):
             return notion_segment[1]
 
 
-def markdown_to_notion(markdown):
+def markdown_to_notion(markdown, client=None):
     if not isinstance(markdown, str):
         markdown = str(markdown)
 
